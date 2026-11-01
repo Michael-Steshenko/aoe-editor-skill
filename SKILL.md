@@ -162,17 +162,27 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
     - `"WHY MAKE" (White) / "THESE?!" (Orange)`
     - `"SCORPION" (White) / "DEATHBALL" (Yellow)`
     - `"CELT SIEGE" (Yellow) / "UNSTOPPABLE" (White)`
-- **Dynamic & Flexible Text Placement**:
-  - Place text where it does NOT cover the action (top-center, top-left, top-right, or bottom-center).
-  - Check where units and fighting are situated on screen and place text in the negative/open terrain space.
+- **Dynamic & Flexible Text Placement (Strict Subject Clearance)**:
+  - > [!IMPORTANT] **TEXT MUST NEVER COVER FOCAL UNITS OR SUBJECTS**
+  - The text overlay must **NEVER cover, occlude, or sit on top of the focal units, buildings, or tactical event** named in the hook (e.g. if the hook says `"SIEGE ELEPHANT BREACH"`, the siege elephants must remain 100% visible and unobstructed by the text).
+  - Place text strictly where it does NOT cover the action (in open negative space, fog of war, or empty terrain).
+  - Check where units and fighting are situated on screen and dynamically position text across top-center, top-left, top-right, or bottom-center so the focal action and subject units remain completely unblocked.
 
 ### 2. Action Frame Selection & Visual-Text Substantiation
 - **Zero Idle Base Frames**: NEVER select a frame where the camera is panned back over peaceful home farms, town centers, or economic queues while action occurs elsewhere.
-- **NO Resign States or Outcome Spoilers**:
-  - The thumbnail must **NEVER show the end state after players resign**.
-  - NEVER capture frames showing `"Player X resigned"` in the in-game chat or player names crossed out / struck-through in the lower-right score box.
-  - Showing resignation messages or crossed-out player names **spoils the match outcome** for the viewer.
-  - All thumbnail frames MUST be captured during **active, tense gameplay BEFORE match-deciding resignations occur**.
+- **Active Combat & Attacking in Progress (NEVER Post-Fight Aftermath or Empty Ruins)**:
+  - The frame MUST capture **live, active fighting or an attack in progress**: units actively clashing in melee, shooting arrows, firing siege projectiles, raiding an eco, or assaulting an enemy base/castle.
+  - **NO Empty Static Ruins**: NEVER pick a frame of broken walls or battered buildings where **no enemy units are actively attacking or present**. Broken walls with no active troops look abandoned, static, and uninteresting.
+  - **NO Post-Fight Aftermath (Bodies on Floor)**: NEVER pick a frame taken after the fight has already concluded, showing only dead corpses/bodies on the floor with remaining units standing idle. Capture the action **during the fight**, not after.
+- **NO Outcome Leaks or Score Spoilers**:
+  - The thumbnail must **NEVER reveal the match outcome**:
+    - NEVER capture frames showing `"Player X resigned"` in chat or crossed-out player names in the score box.
+    - **NO Score Disparity / Overrun Base Leaks**: NEVER choose a frame where the lower-right score box displays a massive score deficit (e.g. player at 70–75% of opponent's score) while the player's base is in ruins/being raided. This blatantly leaks a loss to the viewer and ruins suspense. Keep the score and board state ambiguous or cropped/clean.
+  - All thumbnail frames MUST be captured during **active, tense, competitive gameplay**.
+- **Face Cam Expression Quality Guardrail**:
+  - If the recording features a webcam / face cam overlay:
+    - **Inspect Face Cam Carefully**: Never choose a frame where the creator has an awkward, weird, or unflattering expression (e.g. mid-blink, eyes half-closed, mouth awkwardly open mid-word, yawning, looking away).
+    - Ensure the face cam displays a clean, focused, hyped, laughing, or naturally engaged expression.
 - **Hook Uniqueness Across All Past Videos (`previous_hooks.txt`)**:
   - Always read and check `$env:USERPROFILE\Videos\yt-uploader\previous_hooks.txt` before selecting or rendering a thumbnail hook.
   - This persistent text file is the **sole memory of all previous hooks**, allowing past video clips to be deleted from disk without losing hook history.
@@ -181,17 +191,32 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
 - **Visual Must Substantiate the Text Hook**:
   - The visual frame must **directly show what the hook claims**. Never make a claim in the text that isn't prominently visible in the frame:
     - If the hook is `"CASTLE DENIED!"`: The denied/failing castle foundation, dead builders, or defensive towers/units shutting it down **MUST be clearly visible on screen**.
-    - If the hook is `"WHY IS THERE A HOLE?!"` or `"WALL BREACHED!"`: The actual gap in the wall with enemy units (e.g. cav archers, knights) running through **MUST be clearly visible on screen**.
-    - If a specific unit is referenced (e.g. `"STEPPE LANCERS"`, `"ELEPHANT ARCHER"`): Those exact units must be actively visible on screen in combat.
+    - If the hook is `"WHY IS THERE A HOLE?!"` or `"WALL BREACHED!"`: The actual gap in the wall with enemy units running through **MUST be clearly visible on screen**.
+    - If a specific unit is referenced (e.g. `"STEPPE LANCERS"`, `"ELEPHANT ARCHER"`): Those exact units must be actively visible on screen in combat without text covering them.
 - **Frontline Engagements & Active Combat**:
   - Avoid wide empty landscapes with buildings in fog/distance and no units clashing.
-  - Always locate the actual combat / tactical focal point:
-    - Clashing army deathballs (massed units with projectiles, arrows, mangonel stones, or melee combat).
-    - Raids actively slicing into eco or streaming through a broken wall.
-    - Castle drops under active construction/defense.
-  - Always inspect and verify visually that active military units are clashing on screen.
+  - Always locate the actual combat / tactical focal point (clashing army deathballs, raids actively slicing into eco, forward castles under active assault).
 
-### 3. Match Story & Unit Specificity Accuracy
+### 3. Match Story, Core Strategy & Tactical Specificity
+- **Accurate Unit Naming (NO Nonsensical Civ Adjectives)**:
+  - Civilization adjectives apply **ONLY to real unique units or unique technologies** (e.g., Italians have *Genoese Crossbowmen*; trebuchets are a generic Imperial Age siege weapon, so calling them *"Genoese Trebuchets"* makes no sense).
+  - Never attach civ names as adjectives to generic units unless grammatically and factually accurate to the game.
+- **Avoid Mundane / Routine Siege — Highlight High-Stakes Dramatic Events**:
+  - Routine occurrences (such as 4 standard trebuchets firing at a castle) are ordinary AoE2 gameplay and are not special or unique.
+  - Center thumbnails on truly memorable, catastrophic, or distinct turns:
+    - Teammate losing their entire base / getting flattened / overrun (`"TEAMMATE BASE / WIPED OUT!"`, `"TEAMMATE / OVERRUN!"`).
+    - Catastrophic base collapses, massive forward castle rushes, dramatic multi-front reversals, or game-deciding economy wipes.
+- **Highlight the Defining Match Dynamic & Proactive Strategy**:
+  - Identify what made the match truly unique or what core strategy the player committed to:
+    - **Protracted Feudal Wars**: If a game is an extended, 20-minute Feudal Age bloodbath on Steppe/Arabia, focus on that defining dynamic (`"ENDLESS FEUDAL / WAR!"`, `"FEUDAL AGE / FOREVER?!"`).
+    - **Core Offensive Strategy vs Endgame Collapse**: If the player committed to an all-in strategy like a Donjon rush with massed Serjeants, highlight the proactive game plan (`"ALL IN / DONJONS!"`, `"DONJON / SPAM!"`), rather than a brief defensive collapse during the final moments of the game.
+    - Always represent the core identity and strategic drive of the match.
+- **Authentic AoE2 Community Terminology vs Unremarkable Labels**:
+  - Do NOT label standard generic buildings with a civ name as if they are unique (e.g., "Chinese Castle" is unremarkable—a castle is just a standard castle regardless of civ skin).
+  - Use authentic AoE2 community terminology when describing tactical situations:
+    - `"TREB WAR"`: Trebuchets duel-firing against castles or each other from opposite sides.
+    - `"CASTLE DROP"`, `"TRUSH"`, `"FAST IMP"`, `"SMUSH"`, `"CROSSFIRE"`, `"DOUCHING"`, `"RELIC HEIST"`.
+    - Prioritize truly unique match dynamics first; fall back to common tactical tropes like a "Treb War" only if no more defining story occurred in the match.
 - **Avoid Generic Map Features (Focus on Distinct Match Narrative)**:
   - Do NOT frame hooks around ordinary or baseline map expectations (e.g., framing a Black Forest game around "Chokepoint Lockdown" or "Walling", which is standard for that map).
   - Center hooks on the unique tactical or human story that made the game memorable (e.g., `"THEY GANGED UP / ON MY TEAMMATE!"`, `"HE WENT / TOO ALL IN!"`, `"CLUTCH CONVERSION!"`).
@@ -348,7 +373,13 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
    ```
 
 4. **Generate Varied, Authentic Thumbnail (Matching Video Filename)**:
-   - Pick the key turning point frame.
+   - Pick the key turning point frame during **live, active combat or an attack in progress** (NEVER post-fight aftermath with bodies on the floor, NEVER empty broken walls with no enemy units).
+   - If there is a webcam/face cam overlay, inspect the face expression carefully: ensure the creator looks focused, hyped, laughing, or naturally engaged, and NEVER weird, mid-blink, or with an awkward mouth expression.
+   - Position large two-tone typography in negative space, ensuring the text overlay **NEVER covers, occludes, or sits on top of the focal units, buildings, or subject named in the hook**.
+   - Frame the hook around the defining match dynamic or proactive core strategy (e.g., protracted Feudal war, teammate base collapse, all-in donjons) using authentic AoE2 community terminology (e.g. `TREB WAR`).
+   - Avoid nonsensical civ adjectives on generic units (e.g., no "Genoese Trebuchets") or unremarkable labels (e.g., no "Chinese Castle").
+   - NEVER leak the match outcome via score disparities (e.g. player at 75% score with raided base).
+   - Check and append new hooks to `previous_hooks.txt`.
    - If there is a natural carry or flop unit narrative, apply a contextual, varied meme or spotlight edit without overusing any single meme format.
    - Save the thumbnail using the **exact same name as the video file**, replacing the extension with `.png`:
      `$env:USERPROFILE\Videos\aoe\<DDMmmYY>\<MatchingVideoName>.png`
@@ -363,7 +394,7 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
    - Format YouTube title per standard: `<MyCiv(s)> vs <OpponentCiv(s)> AOE2 <MatchFormat> <Map>` (strictly NO Win/Loss spoilers, NO Game 1/Game 2).
    - Format description including **Age Transition Chapters**.
    - Set Game Title (Gaming Category 20): `Age of Empires II: Definitive Edition`.
-   - **CLI Tool (`yutu`)**: Located at `yutu` (or `yutu` alias).
+   - **CLI Tool (`yutu`)**: Located at `yutu` (or direct binary at `$env:LOCALAPPDATA\Microsoft\WinGet\Packages\eat-pray-ai.yutu_Microsoft.Winget.Source_8wekyb3d8bbwe\yutu.exe`).
      - > [!IMPORTANT] **`YUTU_ROOT` & RELATIVE FORWARD-SLASH PATHS REQUIREMENT**
        > `yutu` is built with Go and resolves all filesystem paths using `os.DirFS($env:YUTU_ROOT)`.
        > Passing Windows absolute paths (e.g., `C:\Users\Michael\...` with drive letters or backslashes) to credentials, `--file`, or `--thumbnail` will cause Go's filesystem validator to throw:
