@@ -197,33 +197,42 @@ yutu channel list --for mine
 
 ---
 
-### Step 6: Configure `SKILL.md`
+### Step 6: Create `config.json` for Channel & Playlist IDs
 
-Open [`SKILL.md`](SKILL.md) in your editor and replace the placeholder IDs with your own:
+To keep your personal YouTube channel and playlist IDs completely separate from git version control, save them in `$env:USERPROFILE\Videos\yt-uploader\config.json`:
 
-```markdown
-- **1v1 Matches**: Add to `AOE2 1v1s`
-  - **Playlist ID**: `<Your1v1PlaylistID>`          <-- Replace with your 1v1 playlist ID
-- **Team Game Matches (2v2, 3v3, 4v4)**: Add to `AOE2 team games`
-  - **Playlist ID**: `<YourTeamPlaylistID>`         <-- Replace with your team game playlist ID
-- **Channel ID**: `<YourChannelID>`                 <-- Replace with your channel ID
+```json
+{
+  "channelId": "UC...",
+  "playlist1v1": "PL...",
+  "playlistTeam": "PL..."
+}
 ```
+
+The skill automatically reads this configuration file at runtime, keeping `SKILL.md` 100% clean and repository-ready.
 
 ---
 
 ## Installation into Your AI Agent
 
-Copy or clone this repository into your AI agent's skills directory:
+### Option A: Live Directory Junction (Recommended)
+Creating an NTFS directory junction links your AI agent's skill directory directly to this repository without administrator rights. Any changes made by the AI or pulled from GitHub are immediately live in both places:
 
 ```powershell
 # For Gemini CLI / Antigravity:
-Copy-Item -Path "aoe-editor-skill" -Destination "$HOME\.gemini\config\skills\aoe-editor" -Recurse
+cmd /c mklink /J "$HOME\.gemini\config\skills\aoe-editor" "$PWD"
 
 # For Claude Code:
-Copy-Item -Path "aoe-editor-skill" -Destination "$HOME\.claude\skills\aoe-editor" -Recurse
+cmd /c mklink /J "$HOME\.claude\skills\aoe-editor" "$PWD"
+```
 
-# For Cursor / Windsurf / Repository workspace:
-Copy-Item -Path "aoe-editor-skill" -Destination ".claude\skills\aoe-editor" -Recurse
+### Option B: Standard Copy
+```powershell
+# For Gemini CLI / Antigravity:
+Copy-Item -Path "." -Destination "$HOME\.gemini\config\skills\aoe-editor" -Recurse
+
+# For Claude Code:
+Copy-Item -Path "." -Destination "$HOME\.claude\skills\aoe-editor" -Recurse
 ```
 
 ---

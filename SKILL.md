@@ -284,18 +284,28 @@ Always ensure the Game Title metadata in YouTube (under the Gaming category in Y
 ## YouTube Playlist Assignment (1v1s & Team Games)
 
 All uploaded videos must be immediately assigned to their dedicated playlist based on match format:
-- **1v1 Matches**: Add to `AOE2 1v1s`
-  - **Playlist ID**: `<Your1v1PlaylistID>`
-- **Team Game Matches (2v2, 3v3, 4v4)**: Add to `AOE2 team games`
-  - **Playlist ID**: `<YourTeamPlaylistID>`
-- **Channel ID**: `<YourChannelID>`
+- **1v1 Matches**: Add to `AOE2 1v1s` (`playlist1v1`)
+- **Team Game Matches (2v2, 3v3, 4v4)**: Add to `AOE2 team games` (`playlistTeam`)
+
+### Playlist Configuration Loading (`config.json`):
+To keep personal playlist IDs and channel IDs out of repository code, read them dynamically from `$env:USERPROFILE\Videos\yt-uploader\config.json`:
+```powershell
+$cfgPath = "$env:USERPROFILE\Videos\yt-uploader\config.json"
+if (Test-Path $cfgPath) {
+    $ytCfg = Get-Content -Raw $cfgPath | ConvertFrom-Json
+    $channelId = $ytCfg.channelId
+    $pl1v1 = $ytCfg.playlist1v1
+    $plTeam = $ytCfg.playlistTeam
+}
+```
 
 ### Playlist Insertion Command (`yutu`):
 ```powershell
+# $targetPlaylist is $pl1v1 for 1v1 matches, or $plTeam for team games
 & "yutu" playlistItem insert `
   --kind video `
-  --playlistId "<PlaylistID>" `
-  --channelId "<YourChannelID>" `
+  --playlistId "$targetPlaylist" `
+  --channelId "$channelId" `
   --kVideoId "<VideoID>" `
   --yes
 ```
@@ -421,11 +431,11 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
        ```
      - **Assign to Playlist**:
        ```powershell
-       # Target Playlist: <Your1v1PlaylistID> (1v1) or <YourTeamPlaylistID> (Team Games)
+       # Target Playlist: $pl1v1 (for 1v1) or $plTeam (for Team Games) from config.json
        & "yutu" playlistItem insert `
          --kind video `
-         --playlistId "<PlaylistID>" `
-         --channelId "<YourChannelID>" `
+         --playlistId "$targetPlaylist" `
+         --channelId "$channelId" `
          --kVideoId "<VideoID>" `
          --yes
        ```
