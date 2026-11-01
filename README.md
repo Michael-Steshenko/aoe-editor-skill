@@ -235,19 +235,6 @@ The agent will autonomously:
 6. Schedule uploads for **20:00 prime-time release slots**, assign videos to the correct playlist, and attach age transition chapters.
 7. Safely rename the source recording by appending ` - aoe-editor-done`.
 
----
-
-## Repository Structure
-
-```text
-aoe-editor-skill/
-├── SKILL.md                       # Declarative skill specification and ruleset
-├── README.md                      # Documentation, setup & authentication guide
-├── LICENSE                        # MIT License
-├── .gitignore                     # Git ignore rules for media, tokens, and OS files
-└── scripts/
-    └── extract-aoe-games.ps1      # PowerShell helper script for frame sampling & slicing
-```
 
 ---
 
