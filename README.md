@@ -222,18 +222,21 @@ Copy-Item -Path "aoe-editor-skill" -Destination ".claude\skills\aoe-editor" -Rec
 
 ## How to Use
 
-Once installed, your AI agent can be asked in natural language:
+Once installed, simply invoke the skill in your agent prompt:
 
-> *"Process my latest Age of Empires recording session in Videos, extract the matches, generate thumbnails, and schedule them for prime-time YouTube releases."*
+```text
+/aoe-editor
+```
 
 The agent will autonomously:
-1. Scan your session recording using fast keyframe seeking to identify match boundaries.
-2. Discard games under 7 minutes while maintaining match index numbering.
-3. Extract lossless video clips into `$env:USERPROFILE\Videos\aoe\<DateFolder>\`.
-4. Capture turning point frames and render custom mobile-optimized thumbnails.
-5. Inspect your live YouTube schedule queue via `yutu`.
-6. Schedule uploads for **20:00 prime-time release slots**, assign videos to the correct playlist, and attach age transition chapters.
-7. Safely rename the source recording by appending ` - aoe-editor-done`.
+1. Detect unprocessed session recordings in `$env:USERPROFILE\Videos\` (skipping those already marked `- aoe-editor-done`).
+2. Scan footage using sub-second keyframe seeking to map match boundaries and extract fluid age transition chapters.
+3. Discard games under 7 minutes while preserving chronological match numbering.
+4. Extract lossless clips into `$env:USERPROFILE\Videos\aoe\<DateFolder>\`.
+5. Capture decisive combat moments and render high-contrast, mobile-optimized custom thumbnails.
+6. Query your YouTube queue via `yutu` and schedule uploads for daily 20:00 prime-time release slots.
+7. Assign videos to their corresponding 1v1 or Team Game playlist.
+8. Safely mark the source recording as completed by appending ` - aoe-editor-done`.
 
 
 ---
