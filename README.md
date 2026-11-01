@@ -3,10 +3,12 @@
 An autonomous video editing and YouTube publishing skill for AI coding agents, designed specifically for **Age of Empires II: Definitive Edition** (AoE2 DE) gameplay recordings.
 
 I don't recommend you use it, it was vibe-coded and fits my own specific needs and tastes.
-Here's the output:  
+Here's the output:
 
-[my 1v1s](https://www.youtube.com/watch?v=uYJPM7UKTHk&list=PLVHBy9q6_Ft0)  
-[my team games](https://www.youtube.com/watch?v=r9vQlJZ0QYc&list=PLCB7WuHZdkkM)
+| **1v1 Matches** | **Team Games** |
+| :---: | :---: |
+| [![1v1 Matches](https://img.youtube.com/vi/uYJPM7UKTHk/maxresdefault.jpg)](https://www.youtube.com/watch?v=uYJPM7UKTHk&list=PLVHBy9q6_Ft0) | [![Team Games](https://img.youtube.com/vi/r9vQlJZ0QYc/maxresdefault.jpg)](https://www.youtube.com/watch?v=r9vQlJZ0QYc&list=PLCB7WuHZdkkM) |
+| [▶ Watch 1v1 Playlist](https://www.youtube.com/watch?v=uYJPM7UKTHk&list=PLVHBy9q6_Ft0) | [▶ Watch Team Games Playlist](https://www.youtube.com/watch?v=r9vQlJZ0QYc&list=PLCB7WuHZdkkM) |
 
 ---
 
