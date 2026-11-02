@@ -37,6 +37,7 @@ Processing multi-hour gameplay recordings into standalone YouTube matches is usu
 - **Negative-Space Placement**: Automatically locates empty/open terrain space to avoid covering unit combat.
 - **Contextual Unit Memes**: Dynamic triumph/dominance edits (sunglasses, crowns, glowing auras) for carry units, or humorous expressions for flops.
 - **Persistent Hook Memory**: Maintains a persistent `previous_hooks.txt` index to guarantee hook uniqueness across the entire channel history.
+- **Webcam / Face Cam Quality Inspection**: Dedicated 1:1 inspection ensuring natural, energetic, or focused expressions without freeze-frame blink/speech artifacts.
 - **Zero Resign Spoilers**: Ensures thumbnails never capture resignation chat messages or crossed-out player names.
 
 ### 4. Fluid Match Chapters & Milestones

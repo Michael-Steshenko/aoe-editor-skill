@@ -179,22 +179,29 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
     - NEVER capture frames showing `"Player X resigned"` in chat or crossed-out player names in the score box.
     - **NO Score Disparity / Overrun Base Leaks**: NEVER choose a frame where the lower-right score box displays a massive score deficit (e.g. player at 70–75% of opponent's score) while the player's base is in ruins/being raided. This blatantly leaks a loss to the viewer and ruins suspense. Keep the score and board state ambiguous or cropped/clean.
   - All thumbnail frames MUST be captured during **active, tense, competitive gameplay**.
-- **Face Cam Expression Quality Guardrail**:
+- **Face Cam Expression Quality & Crop Inspection Protocol**:
   - If the recording features a webcam / face cam overlay:
-    - **Inspect Face Cam Carefully**: Never choose a frame where the creator has an awkward, weird, or unflattering expression (e.g. mid-blink, eyes half-closed, mouth awkwardly open mid-word, yawning, looking away).
-    - Ensure the face cam displays a clean, focused, hyped, laughing, or naturally engaged expression.
+    - **Dedicated Face Cam Inspection (Crop & Verify at 1:1 Scale)**: Never rely solely on a full 1440p view to judge face expressions. The agent MUST crop and inspect the face cam region (`crop=390:300:0:890` or equivalent webcam box) in isolation at 1:1 pixel scale before finalizing the thumbnail.
+    - **Flattering & Animated Expressions (Avoid Freeze-Frame Glitches)**:
+      - The expression does **NOT need to be closed-mouthed**: open-mouthed expressions are great when they are natural, expressive, or energetic (e.g. laughing, hyped, smiling, cheering, reacting with excitement).
+      - Only filter out **awkward transitional freeze-frame artifacts** (e.g. caught mid-blink with half-closed eyelids, awkward mid-syllable mouth shapes, slack-jawed pauses, or unflattering micro-grimaces).
+      - Look for natural, sharp, engaged, or expressive reactions that look confident and appealing on a thumbnail.
+    - **Frame Shifting Rule (Micro-Step a Few Frames)**: If the in-game action is great but the webcam catches an awkward transitional micro-expression, **do NOT make large jumps across time**. Simply nudge forward or back **just a few frames** (e.g., 3–10 frames, ~0.05s to 0.2s) so that the game action stays on the exact same screen while catching a clean, natural face expression.
 - **Hook Uniqueness Across All Past Videos (`previous_hooks.txt`)**:
   - Always read and check `$env:USERPROFILE\Videos\yt-uploader\previous_hooks.txt` before selecting or rendering a thumbnail hook.
   - This persistent text file is the **sole memory of all previous hooks**, allowing past video clips to be deleted from disk without losing hook history.
   - **Never duplicate an existing hook phrase** from `previous_hooks.txt`.
   - **Always append new hooks** to `$env:USERPROFILE\Videos\yt-uploader\previous_hooks.txt` whenever new thumbnails are finalized.
-- **Visual Must Substantiate the Text Hook**:
-  - The visual frame must **directly show what the hook claims**. Never make a claim in the text that isn't prominently visible in the frame:
+- **Visual Must Substantiate the Text Hook (Zero Unit Hallucination)**:
+  - The visual frame must **directly and visibly substantiate what the hook claims**. Never make a claim in the text that isn't prominently visible in the frame:
+    - **Mandatory 1:1 Unit Verification**: If a specific unit variant is named in the hook (e.g. `"SIEGE ELEPHANTS"`, `"MANGUDAI"`, `"STEPPE LANCERS"`, `"ELEPHANT ARCHER"`):
+      - The agent **MUST visually verify at 1:1 zoom** that those specific units are actively present, alive, and prominently engaged in combat on screen.
+      - **NEVER guess or assume units based on civilization traits or end-game stats**: If you name "Siege Elephants", actual Siege Elephants must be visibly breaching the frame—not standard trebuchets, cavaliers, or generic infantry. If generic siege or cavalry is breaching, name the action accurately (e.g. `"CHOKEPOINT COLLAPSE!"`, `"BASE BREACH!"`, or `"TURKISH SIEGE"`).
     - If the hook is `"CASTLE DENIED!"`: The denied/failing castle foundation, dead builders, or defensive towers/units shutting it down **MUST be clearly visible on screen**.
     - If the hook is `"WHY IS THERE A HOLE?!"` or `"WALL BREACHED!"`: The actual gap in the wall with enemy units running through **MUST be clearly visible on screen**.
-    - If a specific unit is referenced (e.g. `"STEPPE LANCERS"`, `"ELEPHANT ARCHER"`): Those exact units must be actively visible on screen in combat without text covering them.
-- **Frontline Engagements & Active Combat**:
+- **Frontline Engagements & In-Base Offensive Aggression (NO Passive Wall Poking)**:
   - Avoid wide empty landscapes with buildings in fog/distance and no units clashing.
+  - **Offensive Raids & In-Base Action over Passive Wall Stand-Offs**: For Arabia or open maps, capture the player's offensive army actively penetrating or raiding inside the enemy base (villagers fleeing/under fire, town center dives, forward pressure), NOT units standing passively outside walls or idle post-skirmish cleanup.
   - Always locate the actual combat / tactical focal point (clashing army deathballs, raids actively slicing into eco, forward castles under active assault).
 
 ### 3. Match Story, Core Strategy & Tactical Specificity
@@ -383,8 +390,9 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
    ```
 
 4. **Generate Varied, Authentic Thumbnail (Matching Video Filename)**:
-   - Pick the key turning point frame during **live, active combat or an attack in progress** (NEVER post-fight aftermath with bodies on the floor, NEVER empty broken walls with no enemy units).
-   - If there is a webcam/face cam overlay, inspect the face expression carefully: ensure the creator looks focused, hyped, laughing, or naturally engaged, and NEVER weird, mid-blink, or with an awkward mouth expression.
+   - Pick the key turning point frame during **live, active combat or an offensive in-base raid** (NEVER post-fight aftermath with bodies on the floor, NEVER empty broken walls with no enemy units, NEVER passive wall poking outside the town).
+   - **Dedicated Face Cam Check**: If there is a webcam/face cam overlay, crop and inspect the face cam region at 1:1 scale. Expressions do not have to be closed-mouthed (hyped, laughing, shouting, or smiling expressions are great)—just avoid unflattering freeze-frame artifacts (half-blinks, awkward mid-syllable phonemes). If caught mid-transition, nudge just a few frames forward or back (~0.05s–0.2s) to keep the exact same game screen while securing a clean, natural expression.
+   - **1:1 Unit Verification**: Visually confirm that any unit named in the hook is 100% visible on screen at 1:1 resolution (zero unit hallucination).
    - Position large two-tone typography in negative space, ensuring the text overlay **NEVER covers, occludes, or sits on top of the focal units, buildings, or subject named in the hook**.
    - Frame the hook around the defining match dynamic or proactive core strategy (e.g., protracted Feudal war, teammate base collapse, all-in donjons) using authentic AoE2 community terminology (e.g. `TREB WAR`).
    - Avoid nonsensical civ adjectives on generic units (e.g., no "Genoese Trebuchets") or unremarkable labels (e.g., no "Chinese Castle").
