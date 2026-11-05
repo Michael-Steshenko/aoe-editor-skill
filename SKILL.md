@@ -383,6 +383,36 @@ When no pending queue exists, maintain the daily prime-time anchor slot at **20:
 ### 3. Scheduled Upload Format
 Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Timestamp>"` (e.g. `2026-11-16T18:00:00Z` or `2026-11-16T20:00:00+02:00`).
 
+### 4. Video Priority & Facecam Scheduling System (`video_priority.txt`)
+> [!IMPORTANT] **FACECAM FIRST & BACKLOG BUFFERING**
+> Release dates are prioritized based on streamer presence:
+> - **Videos with Facecam**: Have top priority (default priority `10`) and are scheduled first in prime-time slots.
+> - **Videos without Facecam**: Go to the backlog (priority `0`) and are always pushed back behind active facecam videos. As new facecam videos are recorded and uploaded, backlog videos are bumped further down the calendar.
+> - **Custom Priority Tuning (1 to 10)**: The user can assign custom priorities (1 = lowest active priority, 10 = maximum priority) to promote or demote specific matches.
+
+#### Priority Index File (`$env:USERPROFILE\Videos\yt-uploader\video_priority.txt`)
+The priority mapping is stored persistently in `video_priority.txt`.
+- **Line Format**:
+  `<video_filename> <sha256_hash> <priority>`
+  - `<video_filename>`: Exact local filename of the video clip (e.g. `Game 2 - Poles vs Turks (Arena - Win).mp4`).
+  - `<sha256_hash>`: SHA-256 hex digest of the cut `.mp4` file, providing a permanent unique identifier.
+  - `<priority>`: Integer from `0` to `10`:
+    - `10`: Default for facecam videos (scheduled first).
+    - `1` - `9`: Custom priorities for specific matches.
+    - `0`: Backlog for non-facecam videos (pushed behind all priority >= 1 videos).
+
+#### Scheduling & Reordering Algorithm:
+1. Scheduled queue slots start at today's or the next available anchor slot at **20:00 local time** (`Day + 1`, `Day + 2`, etc.).
+2. **Deterministic Sort & Tiebreak Hierarchy**:
+   - **1st Key (Priority)**: `Priority` Descending (10 down to 1).
+   - **2nd Key (Recording Date Tiebreak)**: When two videos have the same priority, tiebreak by chronological recording date of the session (`29Oct26` < `30Oct26` < `31Oct26` < `04Nov26`).
+   - **3rd Key (Game Number Tiebreak)**: When two videos have the same priority and same recording date, tiebreak by original session match numbering (`Game 1` < `Game 2` < `Game 3`, etc.).
+   - **Backlog Tier**: Priority `0` videos (no facecam) are scheduled strictly after all prioritized videos (pushed to the end of the queue), sorted among themselves by the exact same 2nd (recording date) and 3rd (game numbering) tiebreak hierarchy.
+3. **User Review Before Rescheduling**:
+   - Whenever video priorities are established or modified, the agent updates `$env:USERPROFILE\Videos\yt-uploader\video_priority.txt`.
+   - The agent MUST present the proposed schedule and priority mapping to the user for review before updating the schedule on YouTube.
+   - Upon user approval, the agent executes schedule updates via `yutu video update --id <id> --publishAt <ISO_Timestamp> --yes`.
+
 ---
 
 ## Step-by-Step Execution Workflow
@@ -434,7 +464,8 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
 
 6. **Execute Scheduled YouTube Uploads, Metadata, & Playlists (`yutu`)**:
    - Activate Native Keep-Awake (`SetThreadExecutionState` with `0x80000001`) so the PC and uploads stay active while allowing the monitor to sleep.
-   - **Inspect Queue**: Run dynamic schedule queue inspection to identify latest scheduled date on YouTube.
+   - **Priority Indexing (`video_priority.txt`)**: Compute SHA256 hash for newly exported clips. Assign priority (`10` for facecam, `0` for backlog without facecam) in `$env:USERPROFILE\Videos\yt-uploader\video_priority.txt`.
+   - **Inspect Queue & Order**: Run dynamic schedule queue inspection to identify scheduled dates. Order releases by priority (facecam videos scheduled first, priority 0 backlog pushed behind). Present proposed schedule for user review before making schedule changes.
    - Compute each video's upload/publish timestamp.
    - Format YouTube title per standard: `<MyCiv(s)> vs <OpponentCiv(s)> AOE2 <MatchFormat> <Map>` (strictly NO Win/Loss spoilers, NO Game 1/Game 2).
    - Format description including **Age Transition Chapters**.
