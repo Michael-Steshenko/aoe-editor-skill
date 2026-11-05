@@ -33,11 +33,12 @@ Processing multi-hour gameplay recordings into standalone YouTube matches is usu
 - **One-Sided Stomp Detection**: Detects heavily uncompetitive stomps and cuts the clip for local preservation, prompting the user for review before queueing for YouTube.
 
 ### 3. High-Contrast Custom Thumbnails
+- **Zoomed Main-Subject Framing**: Zooms in on the primary combat/tactical subject (~1.4x–2.0x) so units and battles are punchy and clearly visible on mobile feeds, while maintaining full tactical context so the scene makes sense.
+- **Zero Facecam & Score HUD Clutter**: Zooming into the playfield cleanly cuts out the facecam overlay, player score boxes, minimap, and HUD clutter, keeping thumbnails cinematic, clean, and spoiler-free.
 - **Bold Typography & Contrasting Colors**: Generates high-impact, mobile-optimized typography (heavy outlines, drop shadows, 2-tone colors like White + Vibrant Gold/Orange).
 - **Negative-Space Placement**: Automatically locates empty/open terrain space to avoid covering unit combat.
 - **Contextual Unit Memes**: Dynamic triumph/dominance edits (sunglasses, crowns, glowing auras) for carry units, or humorous expressions for flops.
 - **Persistent Hook Memory**: Maintains a persistent `previous_hooks.txt` index to guarantee hook uniqueness across the entire channel history.
-- **Webcam / Face Cam Quality Inspection**: Dedicated 1:1 inspection ensuring natural, energetic, or focused expressions without freeze-frame blink/speech artifacts.
 - **Zero Resign Spoilers**: Ensures thumbnails never capture resignation chat messages or crossed-out player names.
 
 ### 4. Fluid Match Chapters & Milestones
@@ -251,7 +252,7 @@ The agent will autonomously:
 2. Scan footage using sub-second keyframe seeking to map match boundaries and extract fluid age transition chapters.
 3. Discard games under 7 minutes while preserving chronological match numbering.
 4. Extract lossless clips into `$env:USERPROFILE\Videos\aoe\<DateFolder>\`.
-5. Capture decisive combat moments and render high-contrast, mobile-optimized custom thumbnails.
+5. Capture decisive combat moments, zoom in on the main subject (excluding facecam and scores), and render high-contrast custom thumbnails.
 6. Query your YouTube queue via `yutu` and schedule uploads for daily 20:00 prime-time release slots.
 7. Assign videos to their corresponding 1v1 or Team Game playlist.
 8. Safely mark the source recording as completed by appending ` - aoe-editor-done`.

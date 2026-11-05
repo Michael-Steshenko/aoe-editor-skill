@@ -1,6 +1,6 @@
 ---
 name: aoe-editor
-description: Full end-to-end Age of Empires video editing and publishing workflow. Detects and cuts session recordings into individual game clips in date subfolders, extracts age transition chapters, keeps post-game analysis, trims queues/idle, discards games under 7 minutes while maintaining original numbering, flags one-sided games for review, generates authentic custom YouTube thumbnails matching each video's filename with optional unit meme edits, dynamically inspects YouTube schedule queues, assigns videos to 1v1 and Team Game playlists, preserves source files, and marks completed session recordings by appending ' - aoe-editor-done' before the file extension.
+description: Full end-to-end Age of Empires video editing and publishing workflow. Detects and cuts session recordings into individual game clips in 'Videos/aoe/<DDMmmYY>' date subfolders, extracts age transition chapters, keeps post-game analysis, trims queues/idle, discards games under 7 minutes while maintaining original numbering, flags one-sided games for review, generates authentic custom YouTube thumbnails zoomed in on the main subject (excluding facecam and scores while preserving tactical context) matching each video's filename with optional unit meme edits, dynamically inspects YouTube schedule queues, assigns videos to 1v1 and Team Game playlists, preserves source files, and marks completed session recordings by appending ' - aoe-editor-done' before the file extension.
 ---
 
 # AoE Editor
@@ -52,6 +52,14 @@ To allow the workflow to run completely unattended (detecting, cutting clips, re
 
 ## Destination Folder Structure
 
+> [!IMPORTANT] **ALWAYS STORE UNDER `Videos\aoe\<DDMmmYY>\` — NEVER DIRECTLY UNDER `Videos\<DDMmmYY>\`**
+> All output game clips, thumbnails, and date folders MUST be created strictly inside the `aoe` subdirectory:
+> `$env:USERPROFILE\Videos\aoe\<DDMmmYY>\` (e.g., `C:\Users\Michael\Videos\aoe\04Nov26\`).
+> **NEVER** create the date folder directly under `Videos\` (e.g., do NOT create `Videos\04Nov26\`).
+> This ensures:
+> 1. All session folders remain grouped together cleanly under `Videos\aoe\` alongside existing sessions (`13Oct26`, `27Oct26`, `29Oct26`, `30Oct26`, `31Oct26`, etc.).
+> 2. `yutu` commands can reliably locate video and thumbnail files via relative paths `aoe/<DDMmmYY>/<File>` relative to `$env:YUTU_ROOT` (`$env:USERPROFILE\Videos`).
+
 All processed games and thumbnails are saved under the `aoe` directory inside a date-formatted subfolder derived from the recording filename:
 
 ```text
@@ -68,6 +76,7 @@ $env:USERPROFILE\Videos\aoe\<DDMmmYY>\
   - Example: `2026-10-27 20-35-29.mp4` -> `27Oct26`
   - Example: `2026-10-29 19-46-42.mp4` -> `29Oct26`
   - Format: `<Day><3-letter Month><2-digit Year>` (e.g., `13Oct26`, `27Oct26`, `29Oct26`).
+  - Full Directory: `$env:USERPROFILE\Videos\aoe\<Day><3-letter Month><2-digit Year>\`
 
 ---
 
@@ -104,7 +113,7 @@ $env:USERPROFILE\Videos\aoe\<DDMmmYY>\
 ## Strict Naming Conventions
 
 ### 1. Local Video & Thumbnail Filenames (`.mp4` / `.png`)
-Local files on disk are named for local tracking, archiving, and match chronology:
+All output files on disk are saved inside `$env:USERPROFILE\Videos\aoe\<DDMmmYY>\` and named for local tracking, archiving, and match chronology:
 - **Game Number**: The chronological match index from the session (`Game 1`, `Game 2`, etc.), preserving skipped numbers for <7m discarded matches.
 - **Civilizations**:
   - 1v1: `Game <N> - <MyCiv> vs <OpponentCiv> (<Map> - <Result/Notes>).mp4`
@@ -149,7 +158,28 @@ Local files on disk are named for local tracking, archiving, and match chronolog
 
 Avoid deceptive clickbait or repetitive single-meme tropes. Ground the thumbnail in what actually happened, keeping meme edits varied, organic, and fitting to the match story:
 
-### 1. High-Impact Thumbnail Styling & Typography
+### 1. Main-Subject Zoom Framing (Strictly NO Facecam & NO Scores)
+> [!IMPORTANT] **ZOOM IN ON THE MAIN SUBJECT — EXCLUDE FACECAM & SCORES**
+> In raw Age of Empires II gameplay recordings (1440p or 1080p), the camera view is pulled far back, making individual units and tactical skirmishes tiny and indistinct on mobile feeds and YouTube browse thumbnails.
+> **Always zoom into the screenshot before creating the thumbnail**:
+> - **Main Subject Prominence**: Zoom in on the primary tactical engagement, offensive raid, castle push, or decisive unit clash so that the main subject is immediately bold, prominent, and punchy.
+> - **Preserve Essential Tactical Context**: Do NOT over-zoom into an extreme macro close-up (e.g. 4x zoom showing just one isolated unit). Maintain enough surrounding tactical context (defensive walls, opposing army lines, town center, base structure, arrow fire/projectiles) so the screenshot makes complete tactical sense and directly matches the text hook.
+> - **Strictly NO Facecam & NO Scores (Perimeter Exclusion)**:
+>   - The thumbnail must **NEVER show the streamer's webcam / facecam overlay** (located on the left side) and **NEVER show the player scores / leader panel** (located in the bottom-right corner).
+>   - Because the main action takes place in the central playfield, zooming in enough on the tactical engagement naturally eliminates the screen perimeter, completely cropping out the facecam, score boxes, minimap, and HUD bars.
+>   - Always verify that the crop coordinates stay completely clear of the webcam region (typically `x <= 390, y >= 890` on 1440p) and the score box (typically `x >= 2100, y >= 1000` on 1440p).
+> - **Recommended Zoom & Aspect Ratio**:
+>   - Always maintain standard **16:9 widescreen aspect ratio**.
+>   - Standard zoom factor is typically **~1.4x to 2.0x** (recommended ~1.6x zoom):
+>     - **1440p Source (2560x1440)**: Crop window of `1600x900` (1.6x) or `1440x810` (1.78x), scaled back to `2560x1440`.
+>     - **1080p Source (1920x1080)**: Crop window of `1200x675` (1.6x) or `1080x608` (1.78x), scaled back to `1920x1080`.
+>   - **FFmpeg Zoom & Scale Command**:
+>     ```powershell
+>     # Crop W:H:X:Y centered on focal action (X, Y), scaled back to 1440p with vibrance boost:
+>     ffmpeg -hide_banner -loglevel warning -ss <Timestamp> -i "<VideoPath>" -vframes 1 -vf "crop=1600:900:<X>:<Y>,scale=2560:1440:flags=lanczos,eq=saturation=1.20:contrast=1.08" -y "<ThumbnailPath>"
+>     ```
+
+### 2. High-Impact Thumbnail Styling & Typography
 Design bold, high-contrast typography optimized for mobile feed legibility:
 - **Large & Punchy Text**: Font size must be large and immediately legible on mobile feeds (`fontsize=140` to `160` for 1440p, scaled for other resolutions). Never use small, low-contrast text (<100).
 - **Thick Outlines & Drop Shadows**: Use a heavy black border (`borderw=8` to `12`) and shadow (`shadowx=4:shadowy=4:shadowcolor=black`) so text pops against any background.
@@ -168,7 +198,7 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
   - Place text strictly where it does NOT cover the action (in open negative space, fog of war, or empty terrain).
   - Check where units and fighting are situated on screen and dynamically position text across top-center, top-left, top-right, or bottom-center so the focal action and subject units remain completely unblocked.
 
-### 2. Action Frame Selection & Visual-Text Substantiation
+### 3. Action Frame Selection & Visual-Text Substantiation
 - **Zero Idle Base Frames**: NEVER select a frame where the camera is panned back over peaceful home farms, town centers, or economic queues while action occurs elsewhere.
 - **Active Combat & Attacking in Progress (NEVER Post-Fight Aftermath or Empty Ruins)**:
   - The frame MUST capture **live, active fighting or an attack in progress**: units actively clashing in melee, shooting arrows, firing siege projectiles, raiding an eco, or assaulting an enemy base/castle.
@@ -176,17 +206,10 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
   - **NO Post-Fight Aftermath (Bodies on Floor)**: NEVER pick a frame taken after the fight has already concluded, showing only dead corpses/bodies on the floor with remaining units standing idle. Capture the action **during the fight**, not after.
 - **NO Outcome Leaks or Score Spoilers**:
   - The thumbnail must **NEVER reveal the match outcome**:
-    - NEVER capture frames showing `"Player X resigned"` in chat or crossed-out player names in the score box.
-    - **NO Score Disparity / Overrun Base Leaks**: NEVER choose a frame where the lower-right score box displays a massive score deficit (e.g. player at 70–75% of opponent's score) while the player's base is in ruins/being raided. This blatantly leaks a loss to the viewer and ruins suspense. Keep the score and board state ambiguous or cropped/clean.
+    - NEVER capture frames showing `"Player X resigned"` in chat or crossed-out player names.
+    - Zooming into the main playfield subject guarantees player scores, leaderboard deficits, and resignation messages are cleanly cropped out of the thumbnail.
+    - If any chat text or player status is somehow within the zoomed playfield, adjust the crop framing or time offset slightly to eliminate it.
   - All thumbnail frames MUST be captured during **active, tense, competitive gameplay**.
-- **Face Cam Expression Quality & Crop Inspection Protocol**:
-  - If the recording features a webcam / face cam overlay:
-    - **Dedicated Face Cam Inspection (Crop & Verify at 1:1 Scale)**: Never rely solely on a full 1440p view to judge face expressions. The agent MUST crop and inspect the face cam region (`crop=390:300:0:890` or equivalent webcam box) in isolation at 1:1 pixel scale before finalizing the thumbnail.
-    - **Flattering & Animated Expressions (Avoid Freeze-Frame Glitches)**:
-      - The expression does **NOT need to be closed-mouthed**: open-mouthed expressions are great when they are natural, expressive, or energetic (e.g. laughing, hyped, smiling, cheering, reacting with excitement).
-      - Only filter out **awkward transitional freeze-frame artifacts** (e.g. caught mid-blink with half-closed eyelids, awkward mid-syllable mouth shapes, slack-jawed pauses, or unflattering micro-grimaces).
-      - Look for natural, sharp, engaged, or expressive reactions that look confident and appealing on a thumbnail.
-    - **Frame Shifting Rule (Micro-Step a Few Frames)**: If the in-game action is great but the webcam catches an awkward transitional micro-expression, **do NOT make large jumps across time**. Simply nudge forward or back **just a few frames** (e.g., 3–10 frames, ~0.05s to 0.2s) so that the game action stays on the exact same screen while catching a clean, natural face expression.
 - **Hook Uniqueness Across All Past Videos (`previous_hooks.txt`)**:
   - Always read and check `$env:USERPROFILE\Videos\yt-uploader\previous_hooks.txt` before selecting or rendering a thumbnail hook.
   - This persistent text file is the **sole memory of all previous hooks**, allowing past video clips to be deleted from disk without losing hook history.
@@ -204,7 +227,7 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
   - **Offensive Raids & In-Base Action over Passive Wall Stand-Offs**: For Arabia or open maps, capture the player's offensive army actively penetrating or raiding inside the enemy base (villagers fleeing/under fire, town center dives, forward pressure), NOT units standing passively outside walls or idle post-skirmish cleanup.
   - Always locate the actual combat / tactical focal point (clashing army deathballs, raids actively slicing into eco, forward castles under active assault).
 
-### 3. Match Story, Core Strategy & Tactical Specificity
+### 4. Match Story, Core Strategy & Tactical Specificity
 - **Accurate Unit Naming (NO Nonsensical Civ Adjectives)**:
   - Civilization adjectives apply **ONLY to real unique units or unique technologies** (e.g., Italians have *Genoese Crossbowmen*; trebuchets are a generic Imperial Age siege weapon, so calling them *"Genoese Trebuchets"* makes no sense).
   - Never attach civ names as adjectives to generic units unless grammatically and factually accurate to the game.
@@ -235,12 +258,12 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
   - Frame hooks around teammate abandons only when an ally prematurely resigns or disconnects without mutual agreement while the match is still contested.
   - When the team mutually concedes with 'gg', frame the hook around the tactical defeat (e.g. `"FORWARD CASTLE!"`, `"SIEGE OVERRUN!"`, `"CASTLE DROP!"`).
 
-### 4. Contextual Unit Highlight & Dynamic Meme Edits
+### 5. Contextual Unit Highlight & Dynamic Meme Edits
 - **When a unit carries the game**: Give it a humorous, varied triumph/dominance meme treatment (sunglasses, crown, glowing aura, "carrying the team" framing, arrows). Rotate styles dynamically across games.
 - **When a unit flops or fails**: Apply a fitting disappointed/humorous meme edit (facepalm energy, sad unit expressions, clown vibes, "this is fine").
 - **Natural & Balanced**: If a clean, intense civ clash or forward siege communicates the story best, rely on the raw gameplay frame with bold two-tone typography without sticker edits.
 
-### 5. Visual Polish & Vibrance Boost
+### 6. Visual Polish & Vibrance Boost
 - Boost saturation (+18-25%) and contrast (+5-10%) so player colors (blue, red, yellow, green) stand out brightly on mobile.
 - Clean 16:9 1440p (2560x1440) or 1080p resolution.
 
@@ -379,6 +402,7 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
    - Check competitiveness: If heavily one-sided, flag for user confirmation before any upload step.
 
 2. **Create Target Folder**:
+   Target folder must strictly be inside `aoe` (`$env:USERPROFILE\Videos\aoe\<DDMmmYY>`), never directly under `Videos\`:
    ```powershell
    New-Item -ItemType Directory -Path "$env:USERPROFILE\Videos\aoe\<DDMmmYY>" -Force
    ```
@@ -391,8 +415,11 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
 
 4. **Generate Varied, Authentic Thumbnail (Matching Video Filename)**:
    - Pick the key turning point frame during **live, active combat or an offensive in-base raid** (NEVER post-fight aftermath with bodies on the floor, NEVER empty broken walls with no enemy units, NEVER passive wall poking outside the town).
-   - **Dedicated Face Cam Check**: If there is a webcam/face cam overlay, crop and inspect the face cam region at 1:1 scale. Expressions do not have to be closed-mouthed (hyped, laughing, shouting, or smiling expressions are great)—just avoid unflattering freeze-frame artifacts (half-blinks, awkward mid-syllable phonemes). If caught mid-transition, nudge just a few frames forward or back (~0.05s–0.2s) to keep the exact same game screen while securing a clean, natural expression.
-   - **1:1 Unit Verification**: Visually confirm that any unit named in the hook is 100% visible on screen at 1:1 resolution (zero unit hallucination).
+   - **Zoom In on Main Subject (Zero Facecam & Zero Scores)**:
+     - Zoom in on the focal action (~1.4x to 2.0x, e.g. 1600x900 crop on 2560x1440 scaled back to 2560x1440) so the main subject is bold, prominent, and punchy on mobile.
+     - Keep enough surrounding tactical context (walls, bases, clashing units) for the scene to make sense and substantiate the text hook.
+     - Strictly ensure the crop window excludes the facecam (left overlay) and scores (lower right).
+   - **1:1 Unit Verification**: Visually confirm that any unit named in the hook is 100% visible on the zoomed screen (zero unit hallucination).
    - Position large two-tone typography in negative space, ensuring the text overlay **NEVER covers, occludes, or sits on top of the focal units, buildings, or subject named in the hook**.
    - Frame the hook around the defining match dynamic or proactive core strategy (e.g., protracted Feudal war, teammate base collapse, all-in donjons) using authentic AoE2 community terminology (e.g. `TREB WAR`).
    - Avoid nonsensical civ adjectives on generic units (e.g., no "Genoese Trebuchets") or unremarkable labels (e.g., no "Chinese Castle").
