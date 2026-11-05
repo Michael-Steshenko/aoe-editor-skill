@@ -275,7 +275,7 @@ Design bold, high-contrast typography optimized for mobile feed legibility:
 Every uploaded video must include the standard gameplay description followed by fluid, timestamped chapters marking baseline age transitions alongside notable match highlights, tactical turning points, and memorable blunders (relative to the cut game start, starting with `00:00`):
 
 - **Baseline Age Transitions (Clean & Standard)**:
-  - `00:00 Dark Age`
+  - `0:00 - Dark Age`
   - `<MM:SS> Feudal Age`
   - `<MM:SS> Castle Age`
   - `<MM:SS> Imperial Age` (if reached)
@@ -292,15 +292,15 @@ Every uploaded video must include the standard gameplay description followed by 
 Age of Empires II: Definitive Edition gameplay.
 
 Chapters:
-00:00 Dark Age
+0:00 - Dark Age
 03:45 Vil Lost to Boar
-10:15 Feudal Age
+10:15 - Feudal Age
 13:30 Hole in the Wall!
-21:10 Castle Age
+21:10 - Castle Age
 24:50 Forward Castle Drop
-31:40 Imperial Age
+31:40 - Imperial Age
 34:15 Decisive Push
-37:50 GG & Post-Game Analysis
+37:50 - GG & Post-Game Analysis
 ```
 
 ### 2. YouTube Game Title & Category
