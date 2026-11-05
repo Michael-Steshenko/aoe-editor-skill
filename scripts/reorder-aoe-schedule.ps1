@@ -2,11 +2,10 @@
 .SYNOPSIS
     AoE Video Priority & Rescheduling Tool
 .DESCRIPTION
-    Manages AoE video priorities and YouTube publishing schedules:
-    - Automatically registers newly cut videos into video_priority.txt and video_priority_meta.json
-    - Automatically checks live YouTube scheduled release queue
-    - Sorts pending scheduled videos by priority (Default 5 for facecam, 0 = Backlog last, 6-10 promoted), session recording date, and game number
-    - Automatically bumps/pushes backlog videos back when new facecam videos are added
+    Manages AoE video priorities and YouTube publishing schedules using video_priority.json:
+    - Registers newly cut clips with priorities (Default 5 for facecam, 0 for backlog, 6-10 promoted)
+    - Verifies live YouTube release statuses and automatically prunes released (public) videos
+    - Reorders pending scheduled releases on YouTube so prioritized videos claim prime-time slots and backlog videos are bumped back
     - Updates YouTube video publishAt dates
 #>
 param(
@@ -14,7 +13,7 @@ param(
     [switch]$Apply = $false,
 
     [Parameter(Mandatory=$false)]
-    [switch]$CleanOnly = $false, # Only prune released videos from priority files without rescheduling
+    [switch]$CleanOnly = $false, # Only prune released videos from video_priority.json without rescheduling
 
     [Parameter(Mandatory=$false)]
     [string]$StartDate = "", # First schedule slot date (YYYY-MM-DD). If omitted, auto-detected.
@@ -35,10 +34,7 @@ param(
     [int]$Priority = -1, # Explicit priority override (-1 = auto: 5 if facecam, 0 if no facecam)
 
     [Parameter(Mandatory=$false)]
-    [string]$PriorityFile = "$env:USERPROFILE\Videos\yt-uploader\video_priority.txt",
-
-    [Parameter(Mandatory=$false)]
-    [string]$MetaFile = "$env:USERPROFILE\Videos\yt-uploader\video_priority_meta.json"
+    [string]$PriorityFile = "$env:USERPROFILE\Videos\yt-uploader\video_priority.json"
 )
 
 $ErrorActionPreference = "Stop"
@@ -49,10 +45,13 @@ $env:YUTU_ROOT = "$env:USERPROFILE\Videos"
 $env:YUTU_CREDENTIAL = "yt-uploader/client_secrets.json"
 $env:YUTU_CACHE_TOKEN = "yt-uploader/youtube.token.json"
 
-# Load or initialize metadata
+# Load or initialize JSON list
 $items = @()
-if (Test-Path $MetaFile) {
-    $items = @(Get-Content -Raw $MetaFile | ConvertFrom-Json | ForEach-Object { $_ })
+if (Test-Path $PriorityFile) {
+    $raw = Get-Content -Raw $PriorityFile -Encoding UTF8
+    if ($raw.Trim()) {
+        $items = @($raw | ConvertFrom-Json | ForEach-Object { $_ })
+    }
 }
 
 # --- Action: Register Video ---
@@ -76,6 +75,7 @@ if ($RegisterVideo) {
         $relPath = $relPath.Substring($videosRoot.Length).TrimStart('\', '/')
     }
 
+    $session = if ($relPath.Contains('\')) { $relPath.Split('\')[0] } else { "" }
     $prio = if ($Priority -ge 0) { $Priority } elseif ($HasFacecam) { 5 } else { 0 }
 
     $existing = @($items | Where-Object { $_.Hash.ToUpper() -eq $hash -or $_.FileName -eq $fileName })
@@ -85,69 +85,35 @@ if ($RegisterVideo) {
             $e.Facecam = [bool]$HasFacecam
             if ($YTId) { $e.YTId = $YTId }
             $e.RelPath = $relPath
+            $e.Session = $session
             Write-Host "Updated registered video: $fileName (Priority: $prio, YTId: $($e.YTId))" -ForegroundColor Cyan
         }
     } else {
         $newEntry = [PSCustomObject]@{
-            FileName = $fileName
-            RelPath = $relPath
-            Hash = $hash
             Priority = $prio
-            Facecam = [bool]$HasFacecam
+            FileName = $fileName
+            Session = $session
             YTId = $YTId
+            Facecam = [bool]$HasFacecam
+            Hash = $hash
+            RelPath = $relPath
         }
         $items += $newEntry
         Write-Host "Registered new video: $fileName (Priority: $prio, YTId: $YTId)" -ForegroundColor Green
     }
 
-    # Save to MetaFile
-    $items | ConvertTo-Json -Depth 4 | Set-Content -Path $MetaFile -Encoding UTF8
-
-    # Sync into PriorityFile text format
-    if (Test-Path $PriorityFile) {
-        $content = Get-Content $PriorityFile
-        $found = $false
-        $newContent = @()
-        foreach ($line in $content) {
-            if ($line -match "^.+$hash\s+\d+") {
-                $newContent += "$fileName $hash $prio"
-                $found = $true
-            } else {
-                $newContent += $line
-            }
-        }
-        if (-not $found) {
-            $newContent += "$fileName $hash $prio"
-        }
-        $newContent | Set-Content -Path $PriorityFile -Encoding UTF8
-    }
+    # Save to PriorityFile
+    $items | ConvertTo-Json -Depth 4 | Set-Content -Path $PriorityFile -Encoding UTF8
 
     if (-not $Apply) {
-        Write-Host "Video registered successfully. Run reorder-aoe-schedule.ps1 to review schedule or -Apply to update YouTube." -ForegroundColor Yellow
+        Write-Host "Video registered successfully in $PriorityFile. Run reorder-aoe-schedule.ps1 to review schedule or -Apply to update YouTube." -ForegroundColor Yellow
         return
     }
 }
 
 if ($items.Count -eq 0) {
-    Write-Warning "No videos found in $MetaFile."
+    Write-Warning "No videos found in $PriorityFile."
     return
-}
-
-# Sync any hand-edited priorities from text file
-if (Test-Path $PriorityFile) {
-    $lines = Get-Content $PriorityFile
-    foreach ($line in $lines) {
-        $line = $line.Trim()
-        if (-not $line -or $line.StartsWith("#")) { continue }
-        if ($line -match '^(?<file>.+)\s+(?<hash>[a-fA-F0-9]{64})\s+(?<prio>\d+)$') {
-            $h = $Matches['hash'].ToUpper()
-            $p = [int]$Matches['prio']
-            $matched = @($items | Where-Object { $_.Hash.ToUpper() -eq $h })
-            foreach ($m in $matched) {
-                $m.Priority = $p
-            }
-        }
-    }
 }
 
 # --- Dynamic Schedule & Live YouTube Inspection ---
@@ -174,7 +140,7 @@ if ($allYTIds.Count -gt 0) {
     }
 }
 
-# --- Check & Prune Released Videos from Priority Files (Verified on YouTube) ---
+# --- Check & Prune Released Videos from Priority Index (Verified on YouTube) ---
 $releasedItems = @()
 foreach ($item in $items) {
     if ($item.YTId -and $liveStatusMap.ContainsKey($item.YTId)) {
@@ -187,36 +153,16 @@ foreach ($item in $items) {
 }
 
 if ($releasedItems.Count -gt 0) {
-    Write-Host "`nFound $($releasedItems.Count) video(s) already released (public) on YouTube. Cleaning up from priority files..." -ForegroundColor Cyan
+    Write-Host "`nFound $($releasedItems.Count) video(s) already released (public) on YouTube. Cleaning up from $PriorityFile..." -ForegroundColor Cyan
     $releasedHashes = @($releasedItems | ForEach-Object { $_.Hash.ToUpper() })
     foreach ($rel in $releasedItems) {
         Write-Host "  - Pruned released video: $($rel.FileName) (YTId: $($rel.YTId)) [Live YouTube Status: Public]" -ForegroundColor Green
     }
 
-    # 1. Prune from $items and update MetaFile
+    # Prune from $items and update PriorityFile
     $items = @($items | Where-Object { $releasedHashes -notcontains $_.Hash.ToUpper() })
-    $items | ConvertTo-Json -Depth 4 | Set-Content -Path $MetaFile -Encoding UTF8
-
-    # 2. Prune matching lines from PriorityFile
-    if (Test-Path $PriorityFile) {
-        $lines = Get-Content $PriorityFile
-        $filteredLines = @()
-        foreach ($line in $lines) {
-            $trimmed = $line.Trim()
-            $isReleased = $false
-            if ($trimmed -match '^(?<file>.+)\s+(?<hash>[a-fA-F0-9]{64})\s+(?<prio>\d+)$') {
-                $h = $Matches['hash'].ToUpper()
-                if ($releasedHashes -contains $h) {
-                    $isReleased = $true
-                }
-            }
-            if (-not $isReleased) {
-                $filteredLines += $line
-            }
-        }
-        $filteredLines | Set-Content -Path $PriorityFile -Encoding UTF8
-    }
-    Write-Host "Priority files cleaned up: $($releasedItems.Count) released video(s) removed.`n" -ForegroundColor Green
+    $items | ConvertTo-Json -Depth 4 | Set-Content -Path $PriorityFile -Encoding UTF8
+    Write-Host "Priority index cleaned up: $($releasedItems.Count) released video(s) removed.`n" -ForegroundColor Green
 } else {
     Write-Host "Live verification: All checked videos remain unreleased (private) on YouTube. Nothing to prune." -ForegroundColor Gray
 }
@@ -226,16 +172,12 @@ if ($CleanOnly) {
     return
 }
 
-# Filter only pending scheduled videos:
-# A video is pending if:
-# 1. It is private on YouTube with a publishAt timestamp, OR
-# 2. It is newly registered with a YTId and not yet published
+# --- Filter Only Pending Scheduled Videos ---
 $nowUtc = [DateTime]::UtcNow
 $pendingItems = @()
 
 foreach ($item in $items) {
     if (-not $item.YTId) {
-        # Un-uploaded video
         $pendingItems += [PSCustomObject]@{
             Item = $item
             CurrentPublishAt = $null
@@ -247,13 +189,11 @@ foreach ($item in $items) {
     if ($liveStatusMap.ContainsKey($item.YTId)) {
         $st = $liveStatusMap[$item.YTId]
         if ($st.privacyStatus -eq "public") {
-            # Already published! Skip reordering
             continue
         }
         if ($st.publishAt) {
             $pubDate = [DateTime]::Parse($st.publishAt).ToUniversalTime()
             if ($pubDate -lt $nowUtc) {
-                # In the past / published
                 continue
             }
             $pendingItems += [PSCustomObject]@{
@@ -265,7 +205,6 @@ foreach ($item in $items) {
         }
     }
 
-    # If status unknown or newly uploaded private
     $pendingItems += [PSCustomObject]@{
         Item = $item
         CurrentPublishAt = $null
@@ -280,10 +219,8 @@ if ($pendingItems.Count -eq 0) {
 
 # --- Dynamic StartDate Detection ---
 if (-not $StartDate) {
-    # 18:00 UTC = 20:00 local time UTC+2
     $todaySlotUtc = [DateTime]::new($nowUtc.Year, $nowUtc.Month, $nowUtc.Day, 18, 0, 0, [DateTimeKind]::Utc)
     if ($nowUtc.AddMinutes(30) -ge $todaySlotUtc) {
-        # Less than 30 mins to today's slot or already past; start from tomorrow
         $StartDate = $nowUtc.AddDays(1).ToString("yyyy-MM-dd")
     } else {
         $StartDate = $nowUtc.ToString("yyyy-MM-dd")

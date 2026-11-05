@@ -383,7 +383,7 @@ When no pending queue exists, maintain the daily prime-time anchor slot at **20:
 ### 3. Scheduled Upload Format
 Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Timestamp>"` (e.g. `2026-11-16T18:00:00Z` or `2026-11-16T20:00:00+02:00`).
 
-### 4. Video Priority & Facecam Scheduling System (`video_priority.txt`)
+### 4. Video Priority & Facecam Scheduling System (`video_priority.json`)
 > [!IMPORTANT] **FACECAM FIRST & BACKLOG BUFFERING**
 > Release dates are prioritized based on streamer presence:
 > - **Videos with Facecam**: Standard active priority (default priority `5`) scheduled first in prime-time slots.
@@ -394,17 +394,28 @@ Scheduled videos use `"privacyStatus": "private"` with `"publishAt": "<ISO_Times
 >   - `1` - `4`: Demoted Active Priority.
 >   - `0`: Backlog for non-facecam videos (pushed behind all priority >= 1 videos).
 
-#### Priority Index File (`$env:USERPROFILE\Videos\yt-uploader\video_priority.txt`)
-The priority mapping is stored persistently in `video_priority.txt`.
-- **Line Format**:
-  `<video_filename> <sha256_hash> <priority>`
-  - `<video_filename>`: Exact local filename of the video clip (e.g. `Game 2 - Poles vs Turks (Arena - Win).mp4`).
-  - `<sha256_hash>`: SHA-256 hex digest of the cut `.mp4` file, providing a permanent unique identifier.
-  - `<priority>`: Integer from `0` to `10`:
-    - `6` - `10`: Promoted Priority (high-impact matches scheduled first).
-    - `5`: Default Priority for facecam videos.
-    - `1` - `4`: Demoted Active Priority.
-    - `0`: Backlog for non-facecam videos (pushed behind all priority >= 1 videos).
+#### Priority Index File (`$env:USERPROFILE\Videos\yt-uploader\video_priority.json`)
+The priority mapping is stored persistently in `video_priority.json`.
+- **Format (JSON Array of Match Objects)**:
+  ```json
+  [
+    {
+      "Priority": 5,
+      "FileName": "Game 2 - Poles vs Turks (Arena - Win).mp4",
+      "Session": "04Nov26",
+      "YTId": "ET9XYLpjLQ0",
+      "Facecam": true,
+      "Hash": "192476C9188F23D80327A5609B58FDB2E052CA129E78694DF68DBAF014F1D198",
+      "RelPath": "04Nov26\\Game 2 - Poles vs Turks (Arena - Win).mp4"
+    }
+  ]
+  ```
+  - `Priority`: Integer from `0` to `10` (`6-10` promoted, `5` facecam default, `1-4` demoted, `0` backlog).
+  - `FileName`: Local video filename.
+  - `Session`: Session date folder (e.g. `04Nov26`).
+  - `YTId`: YouTube Video ID.
+  - `Facecam`: Boolean indicating whether facecam webcam is present.
+  - `Hash`: SHA-256 hex digest of the video file.
 
 #### Scheduling & Reordering Algorithm:
 1. Scheduled queue slots start at today's or the next available anchor slot at **20:00 local time** (`Day + 1`, `Day + 2`, etc.).
@@ -414,7 +425,7 @@ The priority mapping is stored persistently in `video_priority.txt`.
    - **3rd Key (Game Number Tiebreak)**: When two videos have the same priority and same recording date, tiebreak by original session match numbering (`Game 1` < `Game 2` < `Game 3`, etc.).
    - **Backlog Tier**: Priority `0` videos (no facecam) are scheduled strictly after all prioritized videos (pushed to the end of the queue), sorted among themselves by the exact same 2nd (recording date) and 3rd (game numbering) tiebreak hierarchy.
 3. **User Review & Rescheduling Workflow**:
-   - Whenever video priorities are established or modified, the agent updates `$env:USERPROFILE\Videos\yt-uploader\video_priority.txt`.
+   - Whenever video priorities are established or modified, the agent updates `$env:USERPROFILE\Videos\yt-uploader\video_priority.json`.
    - The agent MUST present the proposed schedule and priority mapping to the user for review before updating the schedule on YouTube.
    - Upon user approval, the agent executes schedule updates via `yutu video update --id <id> --publishAt <ISO_Timestamp> --yes`.
 
@@ -433,7 +444,7 @@ The priority mapping is stored persistently in `video_priority.txt`.
 >        -YTId "<YouTubeVideoID>" `
 >        -HasFacecam $hasFacecam
 >      ```
->      This computes the SHA256 hash, updates `video_priority_meta.json`, and syncs `video_priority.txt`.
+>      This computes the SHA256 hash, updates `video_priority.json`.
 > 3. **Dynamic Schedule Reordering**:
 >    - Run schedule reordering across all pending videos:
 >      ```powershell
@@ -453,7 +464,7 @@ The priority mapping is stored persistently in `video_priority.txt`.
 > 5. **Automated Cleanup of Released Videos (Verified on YouTube)**:
 >    - Every run of `reorder-aoe-schedule.ps1` (or via `-CleanOnly`) queries live YouTube video statuses.
 >    - If a video is confirmed as `public` on YouTube (`privacyStatus == "public"`), it has already been released to viewers.
->    - The script automatically prunes the released video from both `video_priority.txt` and `video_priority_meta.json`.
+>    - The script automatically prunes the released video from `video_priority.json`.
 >    - > [!IMPORTANT] **NEVER ASSUME A VIDEO WAS RELEASED — ALWAYS VERIFY ON YOUTUBE**
 >      > Never prune videos based on local clocks or timestamp assumptions. Only remove entries after live confirmation from YouTube API (`yutu video list` returning `privacyStatus: public`).
 
@@ -517,7 +528,7 @@ The priority mapping is stored persistently in `video_priority.txt`.
      - Assign 1v1s to `AOE2 1v1s` and team games to `AOE2 team games` from `config.json`.
    - **Register in Priority Index (`reorder-aoe-schedule.ps1 -RegisterVideo`)**:
      - For each newly uploaded clip, register with its YouTube ID and facecam status (Priority 5 for facecam, Priority 0 for backlog, 6-10 promoted).
-     - Automatically updates `video_priority_meta.json` and appends to `video_priority.txt`.
+     - Automatically updates `video_priority.json`.
    - **Reorder & Reschedule YouTube Release Queue (`reorder-aoe-schedule.ps1`)**:
      - Recompute publication dates across all pending unreleased videos on YouTube.
      - New facecam videos claim prime-time slots; existing backlog videos are automatically pushed further back.
