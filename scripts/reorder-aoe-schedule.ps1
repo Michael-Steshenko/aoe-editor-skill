@@ -104,9 +104,11 @@ if (-not $Apply) {
 }
 
 Write-Host "`nApplying schedule changes to YouTube..." -ForegroundColor Green
-$sig = '[DllImport("kernel32.dll", SetLastError=true)] public static extern int SetThreadExecutionState(int esFlags);'
-$power = Add-Type -MemberDefinition $sig -Name 'PowerHelper' -Namespace 'SystemSleep' -PassThru
-$power::SetThreadExecutionState([int]0x80000001) | Out-Null
+if (-not ([System.Management.Automation.PSTypeName]'SystemSleep.PowerHelper').Type) {
+    $sig = '[DllImport("kernel32.dll", SetLastError=true)] public static extern int SetThreadExecutionState(int esFlags);'
+    Add-Type -MemberDefinition $sig -Name 'PowerHelper' -Namespace 'SystemSleep'
+}
+[SystemSleep.PowerHelper]::SetThreadExecutionState([int]0x80000001) | Out-Null
 
 try {
     Set-Location -Path "$env:USERPROFILE\Videos"
@@ -120,5 +122,5 @@ try {
     }
     Write-Host "All scheduled dates updated successfully!" -ForegroundColor Green
 } finally {
-    $power::SetThreadExecutionState([int]0x80000000) | Out-Null
+    [SystemSleep.PowerHelper]::SetThreadExecutionState([int]0x80000000) | Out-Null
 }
