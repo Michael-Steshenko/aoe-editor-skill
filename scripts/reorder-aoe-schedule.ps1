@@ -5,7 +5,7 @@
     Manages AoE video priorities and YouTube publishing schedules:
     - Automatically registers newly cut videos into video_priority.txt and video_priority_meta.json
     - Automatically checks live YouTube scheduled release queue
-    - Sorts pending scheduled videos by priority (10 = Facecam first, 0 = Backlog last), session recording date, and game number
+    - Sorts pending scheduled videos by priority (Default 5 for facecam, 0 = Backlog last, 6-10 promoted), session recording date, and game number
     - Automatically bumps/pushes backlog videos back when new facecam videos are added
     - Updates YouTube video publishAt dates
 #>
@@ -29,7 +29,7 @@ param(
     [bool]$HasFacecam = $true, # Whether the registered video has facecam
 
     [Parameter(Mandatory=$false)]
-    [int]$Priority = -1, # Explicit priority override (-1 = auto: 10 if facecam, 0 if no facecam)
+    [int]$Priority = -1, # Explicit priority override (-1 = auto: 5 if facecam, 0 if no facecam)
 
     [Parameter(Mandatory=$false)]
     [string]$PriorityFile = "$env:USERPROFILE\Videos\yt-uploader\video_priority.txt",
@@ -73,7 +73,7 @@ if ($RegisterVideo) {
         $relPath = $relPath.Substring($videosRoot.Length).TrimStart('\', '/')
     }
 
-    $prio = if ($Priority -ge 0) { $Priority } elseif ($HasFacecam) { 10 } else { 0 }
+    $prio = if ($Priority -ge 0) { $Priority } elseif ($HasFacecam) { 5 } else { 0 }
 
     $existing = @($items | Where-Object { $_.Hash.ToUpper() -eq $hash -or $_.FileName -eq $fileName })
     if ($existing.Count -gt 0) {
