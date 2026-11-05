@@ -1,6 +1,6 @@
 ---
 name: aoe-editor
-description: Full end-to-end Age of Empires video editing and publishing workflow. Detects and cuts session recordings into individual game clips in 'Videos/aoe/<DDMmmYY>' date subfolders, extracts age transition chapters, keeps post-game analysis, trims queues/idle, discards games under 7 minutes while maintaining original numbering, flags one-sided games for review, generates authentic custom YouTube thumbnails zoomed in on the main subject (excluding facecam and scores while preserving tactical context) matching each video's filename with optional unit meme edits, dynamically inspects YouTube schedule queues, assigns videos to 1v1 and Team Game playlists, preserves source files, and marks completed session recordings by appending ' - aoe-editor-done' before the file extension.
+description: Full end-to-end Age of Empires video editing and publishing workflow. Detects and cuts session recordings into individual game clips in 'Videos/aoe/<DDMmmYY>' date subfolders, extracts age transition chapters, keeps post-game analysis, trims queues/idle, discards games under 7 minutes while maintaining original numbering, flags one-sided games for review, generates authentic custom YouTube thumbnails zoomed in on the main subject (excluding facecam and scores while preserving tactical context) matching each video's filename with optional unit meme edits, dynamically inspects YouTube schedule queues, assigns videos to 1v1 and Team Game playlists, automatically indexes video priorities (facecam default 10, no-facecam backlog 0), and reorders the scheduled release queue after every session so new facecam videos claim prime-time slots and push backlog videos back, preserves source files, and marks completed session recordings by appending ' - aoe-editor-done' before the file extension.
 ---
 
 # AoE Editor
@@ -408,10 +408,43 @@ The priority mapping is stored persistently in `video_priority.txt`.
    - **2nd Key (Recording Date Tiebreak)**: When two videos have the same priority, tiebreak by chronological recording date of the session (`29Oct26` < `30Oct26` < `31Oct26` < `04Nov26`).
    - **3rd Key (Game Number Tiebreak)**: When two videos have the same priority and same recording date, tiebreak by original session match numbering (`Game 1` < `Game 2` < `Game 3`, etc.).
    - **Backlog Tier**: Priority `0` videos (no facecam) are scheduled strictly after all prioritized videos (pushed to the end of the queue), sorted among themselves by the exact same 2nd (recording date) and 3rd (game numbering) tiebreak hierarchy.
-3. **User Review Before Rescheduling**:
+3. **User Review & Rescheduling Workflow**:
    - Whenever video priorities are established or modified, the agent updates `$env:USERPROFILE\Videos\yt-uploader\video_priority.txt`.
    - The agent MUST present the proposed schedule and priority mapping to the user for review before updating the schedule on YouTube.
    - Upon user approval, the agent executes schedule updates via `yutu video update --id <id> --publishAt <ISO_Timestamp> --yes`.
+
+### 5. Mandatory Automated Priority Indexing & Schedule Reordering on Every Skill Call
+> [!IMPORTANT] **AUTOMATIC REORDERING ON EVERY RUN OF `/aoe-editor`**
+> Every invocation of `/aoe-editor` must automatically register newly processed videos into the priority system and reschedule unreleased YouTube videos so that facecam videos always release first and backlog videos are automatically pushed back:
+> 1. **Facecam Detection & Priority Assignment**:
+>    - For each newly cut clip, automatically detect streamer facecam presence:
+>      - Webcam overlay present -> Priority `10`
+>      - No webcam overlay -> Priority `0` (Backlog)
+> 2. **Register Newly Uploaded Videos**:
+>    - As each new game is uploaded to YouTube, register it into the priority index:
+>      ```powershell
+>      & "scripts/reorder-aoe-schedule.ps1" `
+>        -RegisterVideo "$env:USERPROFILE\Videos\aoe\<DDMmmYY>\<MatchingVideoName>.mp4" `
+>        -YTId "<YouTubeVideoID>" `
+>        -HasFacecam $hasFacecam
+>      ```
+>      This computes the SHA256 hash, updates `video_priority_meta.json`, and syncs `video_priority.txt`.
+> 3. **Dynamic Schedule Reordering**:
+>    - Run schedule reordering across all pending videos:
+>      ```powershell
+>      & "scripts/reorder-aoe-schedule.ps1"
+>      ```
+>      - Dynamically determines the earliest open prime-time slot (`$StartDate`, starting today at 20:00 local if unreleased, or tomorrow if today has passed).
+>      - Queries live YouTube video statuses (filtering out already published public videos).
+>      - New facecam videos slot into prime-time immediately after preceding facecam dates.
+>      - Backlog videos (Priority 0) are automatically shifted down the calendar to make room.
+> 4. **User Review & Application to YouTube**:
+>    - Present the proposed updated schedule to the user.
+>    - Apply updates with Keep-Awake enabled:
+>      ```powershell
+>      & "scripts/reorder-aoe-schedule.ps1" -Apply
+>      ```
+>      This only updates videos whose `publishAt` actually changed.
 
 ---
 
@@ -462,11 +495,24 @@ The priority mapping is stored persistently in `video_priority.txt`.
 5. **Prompt User on Flagged Games & Verify Output**:
    - Present generated files and ask about any one-sided matches flagged during analysis.
 
-6. **Execute Scheduled YouTube Uploads, Metadata, & Playlists (`yutu`)**:
-   - Activate Native Keep-Awake (`SetThreadExecutionState` with `0x80000001`) so the PC and uploads stay active while allowing the monitor to sleep.
-   - **Priority Indexing (`video_priority.txt`)**: Compute SHA256 hash for newly exported clips. Assign priority (`10` for facecam, `0` for backlog without facecam) in `$env:USERPROFILE\Videos\yt-uploader\video_priority.txt`.
-   - **Inspect Queue & Order**: Run dynamic schedule queue inspection to identify scheduled dates. Order releases by priority (facecam videos scheduled first, priority 0 backlog pushed behind). Present proposed schedule for user review before making schedule changes.
-   - Compute each video's upload/publish timestamp.
+6. **Execute Scheduled YouTube Uploads, Metadata, Playlists, & Priority Rescheduling (`yutu`)**:
+   - Activate Native Keep-Awake (`SetThreadExecutionState` with `0x80000001`) so the PC, uploads, and API calls stay active while allowing the monitor to sleep.
+   - **Upload Clips (`yutu video insert`)**:
+     - Format YouTube title per standard: `<MyCiv(s)> vs <OpponentCiv(s)> AOE2 <MatchFormat> <Map>` (strictly NO Win/Loss spoilers, NO Game 1/Game 2).
+     - Format description including **Age Transition Chapters**.
+     - Set Game Title (Gaming Category 20): `Age of Empires II: Definitive Edition`.
+     - Upload as `private` with temporary/provisional `publishAt`.
+   - **Assign Playlists (`yutu playlistItem insert`)**:
+     - Assign 1v1s to `AOE2 1v1s` and team games to `AOE2 team games` from `config.json`.
+   - **Register in Priority Index (`reorder-aoe-schedule.ps1 -RegisterVideo`)**:
+     - For each newly uploaded clip, register with its YouTube ID and facecam status (Priority 10 for facecam, Priority 0 for backlog).
+     - Automatically updates `video_priority_meta.json` and appends to `video_priority.txt`.
+   - **Reorder & Reschedule YouTube Release Queue (`reorder-aoe-schedule.ps1`)**:
+     - Recompute publication dates across all pending unreleased videos on YouTube.
+     - New facecam videos claim prime-time slots; existing backlog videos are automatically pushed further back.
+     - Present proposed updated schedule to user for review.
+     - Apply schedule changes via `& "scripts/reorder-aoe-schedule.ps1" -Apply`.
+   - Release Keep-Awake lock (`0x80000000`).
    - Format YouTube title per standard: `<MyCiv(s)> vs <OpponentCiv(s)> AOE2 <MatchFormat> <Map>` (strictly NO Win/Loss spoilers, NO Game 1/Game 2).
    - Format description including **Age Transition Chapters**.
    - Set Game Title (Gaming Category 20): `Age of Empires II: Definitive Edition`.
