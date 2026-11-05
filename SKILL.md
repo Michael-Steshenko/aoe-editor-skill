@@ -450,6 +450,12 @@ The priority mapping is stored persistently in `video_priority.txt`.
 >      & "scripts/reorder-aoe-schedule.ps1" -Apply
 >      ```
 >      This only updates videos whose `publishAt` actually changed.
+> 5. **Automated Cleanup of Released Videos (Verified on YouTube)**:
+>    - Every run of `reorder-aoe-schedule.ps1` (or via `-CleanOnly`) queries live YouTube video statuses.
+>    - If a video is confirmed as `public` on YouTube (`privacyStatus == "public"`), it has already been released to viewers.
+>    - The script automatically prunes the released video from both `video_priority.txt` and `video_priority_meta.json`.
+>    - > [!IMPORTANT] **NEVER ASSUME A VIDEO WAS RELEASED — ALWAYS VERIFY ON YOUTUBE**
+>      > Never prune videos based on local clocks or timestamp assumptions. Only remove entries after live confirmation from YouTube API (`yutu video list` returning `privacyStatus: public`).
 
 ---
 

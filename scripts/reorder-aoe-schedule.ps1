@@ -14,6 +14,9 @@ param(
     [switch]$Apply = $false,
 
     [Parameter(Mandatory=$false)]
+    [switch]$CleanOnly = $false, # Only prune released videos from priority files without rescheduling
+
+    [Parameter(Mandatory=$false)]
     [string]$StartDate = "", # First schedule slot date (YYYY-MM-DD). If omitted, auto-detected.
 
     [Parameter(Mandatory=$false)]
@@ -169,6 +172,58 @@ if ($allYTIds.Count -gt 0) {
             Write-Warning "Failed to query live status for batch: $_"
         }
     }
+}
+
+# --- Check & Prune Released Videos from Priority Files (Verified on YouTube) ---
+$releasedItems = @()
+foreach ($item in $items) {
+    if ($item.YTId -and $liveStatusMap.ContainsKey($item.YTId)) {
+        $st = $liveStatusMap[$item.YTId]
+        # Never assume: Only prune if confirmed public by YouTube API
+        if ($st.privacyStatus -eq "public") {
+            $releasedItems += $item
+        }
+    }
+}
+
+if ($releasedItems.Count -gt 0) {
+    Write-Host "`nFound $($releasedItems.Count) video(s) already released (public) on YouTube. Cleaning up from priority files..." -ForegroundColor Cyan
+    $releasedHashes = @($releasedItems | ForEach-Object { $_.Hash.ToUpper() })
+    foreach ($rel in $releasedItems) {
+        Write-Host "  - Pruned released video: $($rel.FileName) (YTId: $($rel.YTId)) [Live YouTube Status: Public]" -ForegroundColor Green
+    }
+
+    # 1. Prune from $items and update MetaFile
+    $items = @($items | Where-Object { $releasedHashes -notcontains $_.Hash.ToUpper() })
+    $items | ConvertTo-Json -Depth 4 | Set-Content -Path $MetaFile -Encoding UTF8
+
+    # 2. Prune matching lines from PriorityFile
+    if (Test-Path $PriorityFile) {
+        $lines = Get-Content $PriorityFile
+        $filteredLines = @()
+        foreach ($line in $lines) {
+            $trimmed = $line.Trim()
+            $isReleased = $false
+            if ($trimmed -match '^(?<file>.+)\s+(?<hash>[a-fA-F0-9]{64})\s+(?<prio>\d+)$') {
+                $h = $Matches['hash'].ToUpper()
+                if ($releasedHashes -contains $h) {
+                    $isReleased = $true
+                }
+            }
+            if (-not $isReleased) {
+                $filteredLines += $line
+            }
+        }
+        $filteredLines | Set-Content -Path $PriorityFile -Encoding UTF8
+    }
+    Write-Host "Priority files cleaned up: $($releasedItems.Count) released video(s) removed.`n" -ForegroundColor Green
+} else {
+    Write-Host "Live verification: All checked videos remain unreleased (private) on YouTube. Nothing to prune." -ForegroundColor Gray
+}
+
+if ($CleanOnly) {
+    Write-Host "CleanOnly specified. Exiting without rescheduling." -ForegroundColor Yellow
+    return
 }
 
 # Filter only pending scheduled videos:
